@@ -1,0 +1,438 @@
+--- public/medicare-clinic-system.html (原始)
+
+
++++ public/medicare-clinic-system.html (修改后)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediCare - Clinic Management System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: { colors: { emerald: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' }}}}
+}
+</script>
+<style>
+  * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .dark { color-scheme: dark; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+  .dark ::-webkit-scrollbar-thumb { background: #475569; }
+</style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-950">
+<div id="app"></div>
+
+<script>
+// ============ DATA ============
+const patients = [
+  { id:'P001', name:'John Smith', age:34, gender:'Male', phone:'(555) 123-4567', email:'john@email.com', bloodGroup:'A+', address:'123 Main St, Springfield', insurance:'BlueCross', insuranceId:'BC-2948571', registered:'2023-01-15', lastVisit:'2024-12-10', avatar:'JS', allergies:['Penicillin'], conditions:['Hypertension'] },
+  { id:'P002', name:'Sarah Johnson', age:28, gender:'Female', phone:'(555) 234-5678', email:'sarah@email.com', bloodGroup:'O-', address:'456 Oak Ave, Riverside', insurance:'Aetna', insuranceId:'AE-3847291', registered:'2023-02-20', lastVisit:'2024-12-12', avatar:'SJ', allergies:[], conditions:[] },
+  { id:'P003', name:'Michael Brown', age:45, gender:'Male', phone:'(555) 345-6789', email:'mbrown@email.com', bloodGroup:'B+', address:'789 Pine Rd, Lakewood', insurance:'United Health', insuranceId:'UH-5738291', registered:'2023-03-05', lastVisit:'2024-12-08', avatar:'MB', allergies:[], conditions:['Diabetes'] },
+  { id:'P004', name:'Emily Davis', age:52, gender:'Female', phone:'(555) 456-7890', email:'emily@email.com', bloodGroup:'AB+', address:'321 Elm St, Hillside', insurance:'Cigna', insuranceId:'CG-8472910', registered:'2023-04-12', lastVisit:'2024-12-11', avatar:'ED', allergies:['Sulfa'], conditions:['Arthritis'] },
+  { id:'P005', name:'Robert Wilson', age:67, gender:'Male', phone:'(555) 567-8901', email:'rwilson@email.com', bloodGroup:'O+', address:'654 Maple Dr, Brookfield', insurance:'Medicare', insuranceId:'MC-1928374', registered:'2023-05-08', lastVisit:'2024-12-09', avatar:'RW', allergies:['Aspirin'], conditions:['COPD'] },
+  { id:'P006', name:'Lisa Anderson', age:39, gender:'Female', phone:'(555) 678-9012', email:'lisa@email.com', bloodGroup:'A-', address:'987 Cedar Ln, Fairview', insurance:'Humana', insuranceId:'HM-4829103', registered:'2023-06-15', lastVisit:'2024-12-07', avatar:'LA', allergies:[], conditions:['Asthma'] },
+];
+
+const doctors = [
+  { id:'D001', name:'Dr. Amanda Foster', spec:'Cardiology', phone:'(555) 111-2222', email:'afoster@medicare.com', schedule:'Mon-Fri 8AM-4PM', status:'Available', avatar:'👩‍⚕️', exp:12, rating:4.9, patients:245, edu:'MD - Johns Hopkins', bio:'Board-certified cardiologist.' },
+  { id:'D002', name:'Dr. James Mitchell', spec:'Orthopedics', phone:'(555) 222-3333', email:'jmitchell@medicare.com', schedule:'Mon-Sat 9AM-5PM', status:'In Surgery', avatar:'👨‍⚕️', exp:15, rating:4.8, patients:312, edu:'MD - Mayo Clinic', bio:'Expert orthopedic surgeon.' },
+  { id:'D003', name:'Dr. Rachel Kim', spec:'Pediatrics', phone:'(555) 333-4444', email:'rkim@medicare.com', schedule:'Mon-Fri 7AM-3PM', status:'Available', avatar:'👩‍⚕️', exp:8, rating:4.9, patients:189, edu:'MD - Stanford', bio:'Compassionate pediatrician.' },
+  { id:'D004', name:'Dr. Thomas Chen', spec:'Dermatology', phone:'(555) 444-5555', email:'tchen@medicare.com', schedule:'Tue-Sat 10AM-6PM', status:'Available', avatar:'👨‍⚕️', exp:10, rating:4.7, patients:198, edu:'MD - Harvard', bio:'Cosmetic dermatology specialist.' },
+  { id:'D005', name:'Dr. Maria Rodriguez', spec:'Neurology', phone:'(555) 555-6666', email:'mrodriguez@medicare.com', schedule:'Mon-Thu 8AM-4PM', status:'Off Duty', avatar:'👩‍⚕️', exp:18, rating:4.9, patients:156, edu:'MD - Columbia', bio:'Stroke care expert.' },
+  { id:'D006', name:'Dr. William Park', spec:'General Medicine', phone:'(555) 666-7777', email:'wpark@medicare.com', schedule:'Mon-Fri 9AM-5PM', status:'Busy', avatar:'👨‍⚕️', exp:20, rating:4.8, patients:421, edu:'MD - Yale', bio:'Holistic primary care.' },
+];
+
+const appointments = [
+  { id:'A001', patient:'John Smith', patientId:'P001', doctor:'Dr. Amanda Foster', date:'2024-12-15', time:'09:00 AM', duration:30, status:'Scheduled', type:'Check-up', notes:'Annual check-up', priority:'Medium', room:'Room 101' },
+  { id:'A002', patient:'Sarah Johnson', patientId:'P002', doctor:'Dr. James Mitchell', date:'2024-12-15', time:'10:30 AM', duration:45, status:'In Progress', type:'Follow-up', notes:'Post-surgery', priority:'High', room:'Room 205' },
+  { id:'A003', patient:'Michael Brown', patientId:'P003', doctor:'Dr. Rachel Kim', date:'2024-12-15', time:'11:00 AM', duration:30, status:'Scheduled', type:'Consultation', notes:'Diabetes management', priority:'Medium', room:'Room 103' },
+  { id:'A004', patient:'Emily Davis', patientId:'P004', doctor:'Dr. Thomas Chen', date:'2024-12-14', time:'02:00 PM', duration:30, status:'Completed', type:'Treatment', notes:'Skin treatment', priority:'Low', room:'Room 108' },
+  { id:'A005', patient:'Robert Wilson', patientId:'P005', doctor:'Dr. Maria Rodriguez', date:'2024-12-14', time:'03:30 PM', duration:60, status:'Completed', type:'Diagnosis', notes:'Neurological assessment', priority:'High', room:'Room 301' },
+  { id:'A006', patient:'Lisa Anderson', patientId:'P006', doctor:'Dr. William Park', date:'2024-12-16', time:'09:30 AM', duration:30, status:'Scheduled', type:'Check-up', notes:'BP monitoring', priority:'Medium', room:'Room 102' },
+];
+
+const invoices = [
+  { id:'INV-001', patient:'John Smith', doctor:'Dr. Amanda Foster', date:'2024-12-10', due:'2024-12-25', items:[{desc:'Consultation',qty:1,price:150},{desc:'BP Check',qty:1,price:45}], subtotal:195, tax:15.60, total:210.60, status:'Paid', method:'Insurance' },
+  { id:'INV-002', patient:'Sarah Johnson', doctor:'Dr. James Mitchell', date:'2024-12-08', due:'2024-12-22', items:[{desc:'Surgery',qty:1,price:8500},{desc:'Anesthesia',qty:1,price:1200}], subtotal:9700, tax:776, total:10476, status:'Pending', method:'Insurance' },
+  { id:'INV-003', patient:'Michael Brown', doctor:'Dr. William Park', date:'2024-12-05', due:'2024-12-19', items:[{desc:'Consultation',qty:1,price:120},{desc:'Blood Work',qty:1,price:85}], subtotal:205, tax:16.40, total:221.40, status:'Overdue', method:'Cash' },
+];
+
+const records = [
+  { id:'MR-001', patientId:'P001', patient:'John Smith', doctor:'Dr. Amanda Foster', date:'2024-12-10', diagnosis:'Essential Hypertension - Stage 1', prescription:['Lisinopril 10mg daily','Aspirin 81mg daily'], notes:'BP slightly elevated. Continue medication.', vitals:{bp:'138/88',hr:78,temp:98.4,wt:185,ht:71}, followUp:'2025-01-10' },
+  { id:'MR-002', patientId:'P002', patient:'Sarah Johnson', doctor:'Dr. James Mitchell', date:'2024-12-08', diagnosis:'Post-op Recovery - Knee Replacement', prescription:['Oxycodone 5mg PRN','Cephalexin 500mg TID'], notes:'Surgery successful. Wound healing normally.', vitals:{bp:'120/75',hr:72,temp:98.6,wt:145,ht:65}, followUp:'2024-12-22' },
+];
+
+const revenueData = [{m:'Jul',v:42},{m:'Aug',v:48},{m:'Sep',v:45},{m:'Oct',v:52},{m:'Nov',v:58},{m:'Dec',v:61}];
+const deptData = [{name:'Cardiology',v:28,c:'#10b981'},{name:'Orthopedics',v:22,c:'#3b82f6'},{name:'Pediatrics',v:18,c:'#8b5cf6'},{name:'General',v:32,c:'#f59e0b'}];
+const weekData = [{d:'Mon',v:24},{d:'Tue',v:32},{d:'Wed',v:28},{d:'Thu',v:36},{d:'Fri',v:30},{d:'Sat',v:18},{d:'Sun',v:8}];
+
+// ============ STATE ============
+let currentPage = 'dashboard';
+let darkMode = false;
+let sidebarOpen = false;
+
+// ============ RENDER ============
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderSidebar()}
+    <div class="lg:ml-72">
+      ${renderHeader()}
+      <main class="p-4 lg:p-6">${renderPage()}</main>
+    </div>
+  `;
+  attachEvents();
+}
+
+function renderSidebar() {
+  const items = [
+    {id:'dashboard',label:'Dashboard',icon:'📊'},
+    {id:'patients',label:'Patients',icon:'👥'},
+    {id:'appointments',label:'Appointments',icon:'📅'},
+    {id:'doctors',label:'Doctors',icon:'🩺'},
+    {id:'billing',label:'Billing',icon:'💳'},
+    {id:'records',label:'Records',icon:'📋'},
+    {id:'settings',label:'Settings',icon:'⚙️'},
+  ];
+  return `
+    <aside class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 z-50 transform transition-transform duration-300 ${sidebarOpen?'translate-x-0':'-translate-x-full'} lg:translate-x-0">
+      <div class="flex items-center gap-3 p-5 border-b border-gray-100 dark:border-slate-800">
+        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-white text-lg">🏥</div>
+        <div><h1 class="text-lg font-bold text-gray-900 dark:text-white">MediCare</h1><p class="text-[11px] text-gray-400 font-medium tracking-wide">CLINIC MANAGEMENT</p></div>
+      </div>
+      <nav class="mt-4 px-3">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold mb-2 px-3">Main Menu</p>
+        ${items.map(i => `
+          <button onclick="navigate('${i.id}')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 transition-all text-sm ${currentPage===i.id?'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold':'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800'}">
+            <span>${i.icon}</span><span>${i.label}</span>
+          </button>
+        `).join('')}
+      </nav>
+      <div class="absolute bottom-0 left-0 right-0 p-3">
+        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl p-4 border border-emerald-100 dark:border-emerald-800/30">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white text-xs font-bold">AK</div>
+            <div><p class="text-sm font-semibold text-gray-900 dark:text-white">Dr. Alex Kumar</p><p class="text-[11px] text-gray-500">Administrator</p></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    ${sidebarOpen?'<div class="fixed inset-0 bg-black/50 z-40 lg:hidden" onclick="toggleSidebar()"></div>':''}
+  `;
+}
+
+function renderHeader() {
+  return `
+    <header class="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 sticky top-0 z-30">
+      <div class="flex items-center justify-between px-4 lg:px-6 h-16">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleSidebar()" class="lg:hidden p-2 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg">☰</button>
+          <div class="hidden sm:flex items-center gap-2 bg-gray-50 dark:bg-slate-800 rounded-xl px-3.5 py-2.5 w-72 border border-gray-200 dark:border-slate-700">
+            <span class="text-gray-400">🔍</span>
+            <input type="text" placeholder="Search..." class="bg-transparent text-sm focus:outline-none w-full text-gray-700 dark:text-slate-300">
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="toggleDark()" class="p-2.5 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl">${darkMode?'☀️':'🌙'}</button>
+          <button class="relative p-2.5 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl">
+            🔔<span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+          <div class="flex items-center gap-2 pl-2 ml-1 border-l border-gray-200 dark:border-slate-700">
+            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white text-xs font-bold">AK</div>
+            <span class="hidden md:block text-sm font-medium text-gray-900 dark:text-white">Dr. Kumar</span>
+          </div>
+        </div>
+      </div>
+    </header>
+  `;
+}
+
+function renderPage() {
+  switch(currentPage) {
+    case 'dashboard': return renderDashboard();
+    case 'patients': return renderPatients();
+    case 'appointments': return renderAppointments();
+    case 'doctors': return renderDoctors();
+    case 'billing': return renderBilling();
+    case 'records': return renderRecords();
+    case 'settings': return renderSettings();
+    default: return renderDashboard();
+  }
+}
+
+function renderDashboard() {
+  const todayAppts = appointments.filter(a=>a.date==='2024-12-15');
+  const totalRev = invoices.reduce((s,i)=>s+i.total,0);
+  const pending = invoices.filter(i=>i.status!=='Paid').reduce((s,i)=>s+i.total,0);
+
+  const stats = [
+    {label:'Total Patients',value:patients.length,icon:'👥',color:'from-blue-500 to-blue-600',change:'+12%',up:true},
+    {label:"Today's Appts",value:todayAppts.length,icon:'📅',color:'from-emerald-500 to-emerald-600',change:'+8%',up:true},
+    {label:'Revenue',value:'$'+(totalRev/1000).toFixed(1)+'k',icon:'💰',color:'from-violet-500 to-violet-600',change:'+15%',up:true},
+    {label:'Pending',value:'$'+(pending/1000).toFixed(1)+'k',icon:'⏳',color:'from-amber-500 to-orange-500',change:'-3%',up:false},
+  ];
+
+  const maxRev = Math.max(...revenueData.map(d=>d.v));
+  const maxWeek = Math.max(...weekData.map(d=>d.v));
+
+  return `
+    <div class="space-y-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <p class="text-gray-500 dark:text-slate-400 mt-1 text-sm">Welcome back, Dr. Kumar.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        ${stats.map(s=>`
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700">
+            <div class="flex items-start justify-between">
+              <div class="w-11 h-11 bg-gradient-to-br ${s.color} rounded-xl flex items-center justify-center text-white text-lg">${s.icon}</div>
+              <span class="text-xs font-semibold px-2 py-1 rounded-full ${s.up?'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30':'text-red-700 bg-red-50'}">${s.up?'↑':'↓'}${s.change}</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-4">${s.value}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">${s.label}</p>
+          </div>
+        `).join('')}
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Revenue Overview</h2>
+          <svg viewBox="0 0 500 200" class="w-full h-48">
+            <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/><stop offset="100%" stop-color="#10b981" stop-opacity="0"/></linearGradient></defs>
+            ${[0,.25,.5,.75,1].map(r=>`<line x1="30" y1="${30+140*r}" x2="470" y2="${30+140*r}" stroke="#e2e8f0" stroke-dasharray="4 4"/>`).join('')}
+            <path d="${revenueData.map((d,i)=>`${i===0?'M':'L'}${30+i*88},${170-d.v/maxRev*140}`).join(' ')} L${30+5*88},170 L30,170 Z" fill="url(#ag)"/>
+            <path d="${revenueData.map((d,i)=>`${i===0?'M':'L'}${30+i*88},${170-d.v/maxRev*140}`).join(' ')}" fill="none" stroke="#10b981" stroke-width="2.5"/>
+            ${revenueData.map((d,i)=>`<circle cx="${30+i*88}" cy="${170-d.v/maxRev*140}" r="4" fill="white" stroke="#10b981" stroke-width="2"/><text x="${30+i*88}" y="195" text-anchor="middle" fill="#94a3b8" font-size="10">${d.m}</text>`).join('')}
+          </svg>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-3">Departments</h2>
+          <svg viewBox="0 0 140 140" class="w-32 h-32 mx-auto">
+            ${(()=>{let cum=0;return deptData.map(d=>{const s=(cum/d.v.reduce?0:0);const start=(cum/100)*2*Math.PI-Math.PI/2;cum+=d.v;const end=(cum/100)*2*Math.PI-Math.PI/2;const la=d.v>50?1:0;const r=55,ir=38,cx=70,cy=70;return`<path d="M${cx+r*Math.cos(start)},${cy+r*Math.sin(start)} A${r},${r} 0 ${la} 1 ${cx+r*Math.cos(end)},${cy+r*Math.sin(end)} L${cx+ir*Math.cos(end)},${cy+ir*Math.sin(end)} A${ir},${ir} 0 ${la} 0 ${cx+ir*Math.cos(start)},${cy+ir*Math.sin(start)} Z" fill="${d.c}"/>`;}).join('');})()}
+          </svg>
+          <div class="grid grid-cols-2 gap-2 mt-3">
+            ${deptData.map(d=>`<div class="flex items-center gap-2 text-xs"><span class="w-2.5 h-2.5 rounded-full" style="background:${d.c}"></span><span class="text-gray-600 dark:text-slate-400">${d.name}</span><span class="ml-auto font-semibold text-gray-900 dark:text-white">${d.v}%</span></div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-3">Weekly Appointments</h2>
+          <svg viewBox="0 0 400 180" class="w-full h-44">
+            ${weekData.map((d,i)=>{const h=d.v/maxWeek*130;const x=30+i*52;return`<rect x="${x}" y="${150-h}" width="36" height="${h}" rx="4" fill="#10b981" opacity="0.85"/><text x="${x+18}" y="172" text-anchor="middle" fill="#94a3b8" font-size="10">${d.d}</text>`;}).join('')}
+          </svg>
+        </div>
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700">
+          <div class="p-5 border-b border-gray-100 dark:border-slate-700"><h2 class="text-base font-semibold text-gray-900 dark:text-white">Today's Schedule</h2></div>
+          <div class="p-4 space-y-2">
+            ${todayAppts.map(a=>`
+              <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                <div class="text-center min-w-[48px]"><p class="text-xs font-bold text-gray-900 dark:text-white">${a.time.split(' ')[0]}</p><p class="text-[10px] text-gray-400">${a.time.split(' ')[1]}</p></div>
+                <div class="w-1 h-10 rounded-full ${a.priority==='High'?'bg-red-400':a.priority==='Medium'?'bg-yellow-400':'bg-green-400'}"></div>
+                <div class="flex-1"><p class="text-sm font-medium text-gray-900 dark:text-white">${a.patient}</p><p class="text-xs text-gray-500">${a.doctor} • ${a.room}</p></div>
+                <span class="text-[10px] px-2 py-1 rounded-full font-semibold ${a.status==='Scheduled'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700'}">${a.status}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPatients() {
+  return `
+    <div class="space-y-6">
+      <div class="flex items-center justify-between">
+        <div><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Patients</h1><p class="text-gray-500 dark:text-slate-400 text-sm">${patients.length} registered</p></div>
+        <button class="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:shadow-lg">➕ Add Patient</button>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead><tr class="bg-gray-50 dark:bg-slate-700/50">
+              <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase">Patient</th>
+              <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase">ID</th>
+              <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase hidden md:table-cell">Contact</th>
+              <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase hidden lg:table-cell">Blood</th>
+              <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase hidden lg:table-cell">Insurance</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+              ${patients.map(p=>`
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                  <td class="px-5 py-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold ${p.gender==='Male'?'bg-blue-100 text-blue-700':'bg-pink-100 text-pink-700'}">${p.avatar}</div><div><p class="font-semibold text-gray-900 dark:text-white text-sm">${p.name}</p><p class="text-xs text-gray-500">${p.age}y • ${p.gender}</p></div></div></td>
+                  <td class="px-5 py-4"><span class="text-xs font-mono bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded">${p.id}</span></td>
+                  <td class="px-5 py-4 hidden md:table-cell"><p class="text-sm text-gray-700 dark:text-slate-300">${p.phone}</p><p class="text-xs text-gray-500">${p.email}</p></td>
+                  <td class="px-5 py-4 hidden lg:table-cell"><span class="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded">${p.bloodGroup}</span></td>
+                  <td class="px-5 py-4 hidden lg:table-cell"><p class="text-sm text-gray-700 dark:text-slate-300">${p.insurance}</p></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAppointments() {
+  const statusColors = {'Scheduled':'bg-blue-100 text-blue-700','In Progress':'bg-yellow-100 text-yellow-700','Completed':'bg-green-100 text-green-700','Cancelled':'bg-red-100 text-red-700'};
+  return `
+    <div class="space-y-6">
+      <div class="flex items-center justify-between">
+        <div><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Appointments</h1><p class="text-gray-500 dark:text-slate-400 text-sm">${appointments.length} total</p></div>
+        <button class="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium">➕ New</button>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        ${['Scheduled','In Progress','Completed','Cancelled'].map(s=>{const c=appointments.filter(a=>a.status===s).length;const col=s==='Scheduled'?'blue':s==='In Progress'?'yellow':s==='Completed'?'green':'red';return`<div class="bg-${col}-50 dark:bg-${col}-900/20 rounded-xl p-3 text-center"><p class="text-xl font-bold text-${col}-600">${c}</p><p class="text-[11px] text-${col}-600 opacity-80">${s}</p></div>`;}).join('')}
+      </div>
+      <div class="space-y-3">
+        ${appointments.map(a=>`
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+            <div class="flex items-start gap-4">
+              <div class="w-1.5 h-14 rounded-full ${a.priority==='High'?'bg-orange-500':a.priority==='Medium'?'bg-yellow-500':'bg-green-500'}"></div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1"><h3 class="font-semibold text-gray-900 dark:text-white text-sm">${a.patient}</h3><span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColors[a.status]}">${a.status}</span></div>
+                <p class="text-sm text-gray-600 dark:text-slate-400">${a.doctor}</p>
+                <div class="flex items-center gap-3 mt-2 text-xs text-gray-500"><span>📅 ${a.date}</span><span>🕐 ${a.time}</span><span>📍 ${a.room}</span><span class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded">${a.type}</span></div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderDoctors() {
+  const statusCol = {'Available':'bg-green-100 text-green-700','Busy':'bg-yellow-100 text-yellow-700','In Surgery':'bg-red-100 text-red-700','Off Duty':'bg-gray-100 text-gray-600'};
+  return `
+    <div class="space-y-6">
+      <div><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Doctors</h1><p class="text-gray-500 dark:text-slate-400 text-sm">${doctors.length} professionals</p></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        ${doctors.map(d=>`
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5 hover:shadow-lg transition-all cursor-pointer">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3"><span class="text-3xl">${d.avatar}</span><div><h3 class="font-semibold text-gray-900 dark:text-white text-sm">${d.name}</h3><p class="text-xs text-emerald-600">${d.spec}</p></div></div>
+              <span class="text-[10px] px-2 py-1 rounded-full font-semibold ${statusCol[d.status]}">${d.status}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+              <div class="text-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg"><p class="text-sm font-bold text-gray-900 dark:text-white">${d.exp}</p><p class="text-[10px] text-gray-500">Years</p></div>
+              <div class="text-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg"><p class="text-sm font-bold text-gray-900 dark:text-white">${d.patients}</p><p class="text-[10px] text-gray-500">Patients</p></div>
+              <div class="text-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg"><p class="text-sm font-bold text-gray-900 dark:text-white">⭐${d.rating}</p><p class="text-[10px] text-gray-500">Rating</p></div>
+            </div>
+            <p class="text-xs text-gray-500">🕐 ${d.schedule}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderBilling() {
+  const total = invoices.reduce((s,i)=>s+i.total,0);
+  const paid = invoices.filter(i=>i.status==='Paid').reduce((s,i)=>s+i.total,0);
+  const pending = total - paid;
+  const statusCol = {'Paid':'bg-green-100 text-green-700','Pending':'bg-yellow-100 text-yellow-700','Overdue':'bg-red-100 text-red-700'};
+  return `
+    <div class="space-y-6">
+      <div><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Billing</h1><p class="text-gray-500 dark:text-slate-400 text-sm">Manage invoices & payments</p></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">💰</div><div><p class="text-[11px] text-gray-500">Total Revenue</p><p class="text-xl font-bold text-gray-900 dark:text-white">$${total.toLocaleString()}</p></div></div></div>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">✅</div><div><p class="text-[11px] text-gray-500">Collected</p><p class="text-xl font-bold text-green-600">$${paid.toLocaleString()}</p></div></div></div>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">⏳</div><div><p class="text-[11px] text-gray-500">Outstanding</p><p class="text-xl font-bold text-amber-600">$${pending.toLocaleString()}</p></div></div></div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden">
+        <table class="w-full">
+          <thead><tr class="bg-gray-50 dark:bg-slate-700/50">
+            <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase">Invoice</th>
+            <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase">Patient</th>
+            <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase hidden md:table-cell">Doctor</th>
+            <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase">Amount</th>
+            <th class="text-left px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase">Status</th>
+          </tr></thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+            ${invoices.map(i=>`
+              <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                <td class="px-5 py-4 text-xs font-mono font-semibold text-gray-900 dark:text-white">${i.id}</td>
+                <td class="px-5 py-4 text-sm text-gray-900 dark:text-white">${i.patient}</td>
+                <td class="px-5 py-4 text-sm text-gray-600 dark:text-slate-400 hidden md:table-cell">${i.doctor}</td>
+                <td class="px-5 py-4 text-sm font-bold text-gray-900 dark:text-white">$${i.total.toLocaleString()}</td>
+                <td class="px-5 py-4"><span class="text-[10px] px-2 py-1 rounded-full font-semibold ${statusCol[i.status]}">${i.status}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderRecords() {
+  return `
+    <div class="space-y-6">
+      <div><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Medical Records</h1><p class="text-gray-500 dark:text-slate-400 text-sm">Patient medical history</p></div>
+      <div class="space-y-3">
+        ${records.map(r=>`
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+            <div class="flex items-start gap-4">
+              <div class="w-11 h-11 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">📋</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1"><h3 class="font-semibold text-gray-900 dark:text-white text-sm">${r.patient}</h3><span class="text-[10px] bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">${r.id}</span></div>
+                <p class="text-sm text-emerald-600 font-medium">${r.diagnosis}</p>
+                <div class="flex items-center gap-3 mt-2 text-xs text-gray-500"><span>📅 ${r.date}</span><span>💊 ${r.prescription.length} meds</span><span>BP: ${r.vitals.bp}</span></div>
+                <div class="mt-3 flex flex-wrap gap-1">${r.prescription.map(p=>`<span class="text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full">${p}</span>`).join('')}</div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderSettings() {
+  return `
+    <div class="space-y-6 max-w-4xl">
+      <div><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1><p class="text-gray-500 dark:text-slate-400 text-sm">Manage preferences</p></div>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">🏥 Clinic Information</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Clinic Name</label><input type="text" value="MediCare Clinic" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white"></div>
+          <div><label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Email</label><input type="email" value="admin@medicare.com" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white"></div>
+          <div><label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Phone</label><input type="text" value="(555) 100-2000" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white"></div>
+          <div><label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Address</label><input type="text" value="1200 Healthcare Blvd" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white"></div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">🎨 Appearance</h2>
+        <div class="flex items-center justify-between">
+          <div><p class="text-sm font-medium text-gray-900 dark:text-white">Dark Mode</p><p class="text-xs text-gray-500">Toggle dark theme</p></div>
+          <button onclick="toggleDark()" class="relative w-12 h-6 rounded-full ${darkMode?'bg-emerald-500':'bg-gray-300'} transition-colors"><span class="absolute top-0.5 ${darkMode?'left-6':'left-0.5'} w-5 h-5 bg-white rounded-full shadow transition-all"></span></button>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">🔔 Notifications</h2>
+        ${['Email notifications','SMS alerts','Daily reports','Payment reminders'].map((item,i)=>`
+          <div class="flex items-center justify-between py-2"><p class="text-sm text-gray-700 dark:text-slate-300">${item}</p><button class="relative w-10 h-5 rounded-full ${i<3?'bg-emerald-500':'bg-gray-300'}"><span class="absolute top-0.5 ${i<3?'left-5':'left-0.5'} w-4 h-4 bg-white rounded-full shadow"></span></button></div>
+        `).join('')}
+      </div>
+      <div class="flex justify-end"><button class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-sm font-medium">💾 Save Changes</button></div>
+    </div>
+  `;
+}
+
+// ============ EVENTS ============
+function navigate(page) { currentPage = page; sidebarOpen = false; render(); }
+function toggleSidebar() { sidebarOpen = !sidebarOpen; render(); }
+function toggleDark() { darkMode = !darkMode; document.documentElement.classList.toggle('dark'); render(); }
+function attachEvents() {}
+
+// ============ INIT ============
+render();
+</script>
+</body>
+</html>
